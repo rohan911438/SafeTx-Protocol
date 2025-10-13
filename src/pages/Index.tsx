@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { Activity, Zap, Clock, CheckCircle, Layers } from "lucide-react";
+import { Activity, Zap, Clock, CheckCircle, Layers, Box, Server, Coins, Users } from "lucide-react";
 import { StatusBanner } from "@/components/StatusBanner";
 import { MetricsCard } from "@/components/MetricsCard";
-import { TPSChart } from "@/components/TPSChart";
-import { TransactionTable } from "@/components/TransactionTable";
+import { MultiChart } from "@/components/MultiChart";
+import { DetailedTransactionTable } from "@/components/DetailedTransactionTable";
+import { BlockMonitor } from "@/components/BlockMonitor";
+import { ValidatorStats } from "@/components/ValidatorStats";
+import { AlertSystem } from "@/components/AlertSystem";
+import { NetworkTimeline } from "@/components/NetworkTimeline";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import mockDataRaw from "@/data/mockMetrics.json";
 
 interface MetricsData {
@@ -24,6 +29,105 @@ const mockData = mockDataRaw as MetricsData;
 
 const Index = () => {
   const [metrics, setMetrics] = useState(mockData);
+  const [blockHeight, setBlockHeight] = useState(245789234);
+  const [epoch, setEpoch] = useState(532);
+  const [networkCapacity, setNetworkCapacity] = useState(82);
+  const [activeValidators, setActiveValidators] = useState(1852);
+  const [successRateHistory, setSuccessRateHistory] = useState([98.2, 98.5, 97.9, 98.8, 98.1, 98.4]);
+  const [slotTimeHistory, setSlotTimeHistory] = useState([0.41, 0.39, 0.43, 0.38, 0.44, 0.42]);
+
+  const [alerts, setAlerts] = useState([
+    {
+      id: "1",
+      type: "warning" as const,
+      message: "Network congestion detected in slots 245789200-245789210",
+      timestamp: "2 minutes ago",
+    },
+    {
+      id: "2",
+      type: "info" as const,
+      message: "Epoch 532 started successfully with 1852 active validators",
+      timestamp: "15 minutes ago",
+    },
+  ]);
+
+  const blocks = [
+    {
+      height: blockHeight,
+      hash: "9Kx7s...4Lp2",
+      timestamp: "2s ago",
+      transactions: 248,
+      validator: "Val8x...K2p",
+      slot: 245789235,
+    },
+    {
+      height: blockHeight - 1,
+      hash: "7Hd2p...9Xm4",
+      timestamp: "4s ago",
+      transactions: 312,
+      validator: "Val3c...N7q",
+      slot: 245789234,
+    },
+    {
+      height: blockHeight - 2,
+      hash: "5Qn8r...2Bv7",
+      timestamp: "6s ago",
+      transactions: 195,
+      validator: "Val9z...P4k",
+      slot: 245789233,
+    },
+  ];
+
+  const timelineEvents = [
+    { time: "2m ago", event: "Network congestion cleared - TPS normalized", type: "success" as const },
+    { time: "5m ago", event: "High queue size detected (12 pending)", type: "warning" as const },
+    { time: "8m ago", event: "Validator Val3c...N7q joined the network", type: "info" as const },
+    { time: "15m ago", event: "Epoch 532 commenced", type: "success" as const },
+    { time: "18m ago", event: "Block production rate optimized", type: "info" as const },
+  ];
+
+  const detailedTransactions = [
+    {
+      tx_id: "4Ghs1..K7X",
+      status: "queued" as const,
+      time: "12:45:20",
+      type: "Transfer",
+      fee: "0.000005 SOL",
+      sender: "7Xk2p...9Bv3",
+    },
+    {
+      tx_id: "5Nxy3..T2A",
+      status: "processed" as const,
+      time: "12:44:15",
+      type: "Smart Contract",
+      fee: "0.000012 SOL",
+      sender: "3Mn7q...4Lp8",
+    },
+    {
+      tx_id: "9Zae7..L0F",
+      status: "queued" as const,
+      time: "12:43:02",
+      type: "Transfer",
+      fee: "0.000005 SOL",
+      sender: "2Qw9r...8Xm2",
+    },
+    {
+      tx_id: "2Bsd4..W8P",
+      status: "processed" as const,
+      time: "12:41:58",
+      type: "NFT Mint",
+      fee: "0.000008 SOL",
+      sender: "6Kp3n...5Tv7",
+    },
+    {
+      tx_id: "7Lpr8..Z3D",
+      status: "failed" as const,
+      time: "12:40:50",
+      type: "Transfer",
+      fee: "0.000005 SOL",
+      sender: "9Hd8m...3Bq4",
+    },
+  ];
 
   useEffect(() => {
     // Simulate live updates every 3 seconds
@@ -35,6 +139,8 @@ const Index = () => {
         success_rate: Number((95 + Math.random() * 4).toFixed(1)),
         queue_size: Math.floor(Math.random() * 10),
       }));
+      setBlockHeight((prev) => prev + 1);
+      setNetworkCapacity(Math.floor(75 + Math.random() * 15));
     }, 3000);
 
     return () => clearInterval(interval);
@@ -65,7 +171,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[1800px] mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
@@ -75,17 +181,23 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground tracking-wide">
-            Solana Network Health Monitor
+            Solana Network Health Monitor - Advanced Dashboard
           </p>
           <p className="text-sm text-accent uppercase tracking-widest font-bold">
-            Testnet Prototype Dashboard
+            Testnet Prototype • Real-Time Analytics
           </p>
         </div>
 
         {/* Status Banner */}
         <StatusBanner status={metrics.network_status as "green" | "yellow" | "red"} />
 
-        {/* Metrics Grid */}
+        {/* Alert System */}
+        <AlertSystem
+          alerts={alerts}
+          onDismiss={(id) => setAlerts(alerts.filter((a) => a.id !== id))}
+        />
+
+        {/* Primary Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricsCard
             title="Transactions/Sec"
@@ -116,20 +228,82 @@ const Index = () => {
           />
         </div>
 
-        {/* Chart Section */}
-        <TPSChart data={metrics.tps_history} />
+        {/* Secondary Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricsCard
+            title="Block Height"
+            value={blockHeight.toLocaleString()}
+            icon={Box}
+            status="green"
+          />
+          <MetricsCard
+            title="Current Epoch"
+            value={epoch}
+            icon={Activity}
+            status="green"
+          />
+          <MetricsCard
+            title="Network Capacity"
+            value={networkCapacity}
+            unit="%"
+            icon={Server}
+            status={networkCapacity > 85 ? "yellow" : "green"}
+          />
+          <MetricsCard
+            title="Active Validators"
+            value={activeValidators.toLocaleString()}
+            icon={Users}
+            status="green"
+          />
+        </div>
 
-        {/* Transaction Activity Feed */}
-        <TransactionTable transactions={metrics.recent_transactions} />
+        {/* Charts and Analytics */}
+        <MultiChart
+          tpsData={metrics.tps_history}
+          successRateData={successRateHistory}
+          slotTimeData={slotTimeHistory}
+        />
+
+        <Tabs defaultValue="transactions" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="transactions">Transaction Explorer</TabsTrigger>
+            <TabsTrigger value="blocks">Block Monitor</TabsTrigger>
+            <TabsTrigger value="timeline">Activity Timeline</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="transactions" className="mt-6">
+            <DetailedTransactionTable transactions={detailedTransactions} />
+          </TabsContent>
+
+          <TabsContent value="blocks" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <BlockMonitor blocks={blocks} />
+              </div>
+              <div>
+                <ValidatorStats
+                  activeValidators={activeValidators}
+                  totalValidators={2100}
+                  averageStake="1.2M SOL"
+                  topValidatorPerformance={99.8}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="mt-6">
+            <NetworkTimeline events={timelineEvents} />
+          </TabsContent>
+        </Tabs>
 
         {/* Footer */}
-        <div className="text-center py-8 border-t border-border/50">
+        <div className="text-center py-8 border-t border-border/50 mt-12">
           <p className="text-sm text-muted-foreground">
             Built for{" "}
             <span className="text-primary font-bold">Cyberpunk Solana Hackathon 2025</span>
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Powered by Solana Testnet • Real-time Network Monitoring
+            Powered by Solana Testnet • Real-time Network Monitoring & Analytics
           </p>
         </div>
       </div>
