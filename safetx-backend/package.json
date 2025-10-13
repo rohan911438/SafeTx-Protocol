@@ -1,0 +1,19 @@
+{
+  "name": "safetx-backend",
+  "version": "1.0.0",
+  "description": "SafeTx Protocol Backend - Real-time Solana testnet metrics API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["solana", "testnet", "metrics", "safetx"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "@solana/web3.js": "^1.87.6",
+    "cors": "^2.8.5"
+  }
+}

@@ -2,45 +2,149 @@
 
 SafeTx is a testnet-focused Solana dashboard that detects network congestion, monitors transaction reliability, and showcases a retry/queue mechanism designed to improve UX during heavy load.
 
-This repo contains the frontend dashboard portion of the stack (React + Tailwind + shadcn + Recharts). Off-chain services, Anchor programs, and SDK are out of scope for this UI demo but are represented in the UI via metrics and controls.
+This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + Recharts) and the **backend API** (Node.js + Express + @solana/web3.js) that fetches real-time metrics from Solana devnet.
 
 ## Core Components
 
-- Network Monitor (Off-Chain Service) — simulated via live-updating metrics (TPS, slot time, success rate, queue size)
-- Smart Contract (Anchor Program) — represented conceptually by queued tx metadata and leader/slot visuals
-- Frontend Dashboard (this repo) — health indicator, queue size, retry count, latest slots, validator stats, charts
-- SafeTx SDK (Optional) — modeled via Auto-Retry toggle and Retry/Flush actions
+- **Backend API** (safetx-backend/) — Node.js server that fetches real Solana testnet metrics via RPC
+- **Network Monitor** — Real-time TPS, slot time, success rate, queue size tracking
+- **Smart Contract Layer** — Represented conceptually by queued tx metadata and leader/slot visuals
+- **Frontend Dashboard** (src/) — Health indicator, queue size, retry count, latest slots, validator stats, charts
+- **SafeTx SDK** — Modeled via Auto-Retry toggle and Retry/Flush actions
 
 ## MVP Features (Hackathon-ready)
 
-- Network Health Indicator (green/yellow/red) and Health Score 0–100
-- Live metrics: TPS, Slot Time, Success Rate, Queue Size
-- SafeTx Control Panel: Auto-Retry toggle, Retry Pending, Flush Queue
-- Block Monitor and Validator Stats
-- Transaction Explorer with filtering and statuses (processed/queued/failed)
-- Activity Timeline and composite analytics charts
+- ✅ **Live Solana Devnet Metrics** (via backend API)
+- ✅ Network Health Indicator (green/yellow/red) and Health Score 0–100
+- ✅ Live metrics: TPS, Slot Time, Success Rate, Queue Size
+- ✅ SafeTx Control Panel: Auto-Retry toggle, Retry Pending, Flush Queue
+- ✅ Block Monitor and Validator Stats
+- ✅ Transaction Explorer with filtering and statuses (processed/queued/failed)
+- ✅ Activity Timeline and composite analytics charts
+- ✅ Transaction Queue API endpoints
+- ✅ Toggle between Live and Mock data
 
 ## Tech Stack
 
+**Frontend:**
 - Vite, TypeScript, React
 - Tailwind CSS, shadcn/ui
 - Recharts
 
+**Backend:**
+- Node.js, Express.js
+- @solana/web3.js
+- CORS
+
 ## Getting Started
 
-Prereqs: Node.js 18+ and npm
+### Prerequisites
+- Node.js 18+ and npm
+- Phantom wallet browser extension (for dashboard access)
+
+### 1️⃣ Install Frontend Dependencies
 
 ```bat
 npm i
+```
+
+### 2️⃣ Install Backend Dependencies
+
+```bat
+cd safetx-backend
+npm install
+cd ..
+```
+
+### 3️⃣ Start the Backend Server
+
+Open a **new terminal** and run:
+
+```bat
+cd safetx-backend
+npm start
+```
+
+The backend will start on `http://localhost:5000`
+
+### 4️⃣ Start the Frontend
+
+In your **main terminal**, run:
+
+```bat
 npm run dev
 ```
 
-Build for production:
+The frontend will start on `http://localhost:5173`
 
+### 5️⃣ Access the Dashboard
+
+1. Navigate to `http://localhost:5173`
+2. Click "Connect Phantom Wallet"
+3. Approve the connection
+4. You'll be redirected to `/dashboard` with **live Solana devnet metrics**!
+
+## API Endpoints
+
+The backend provides these endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/metrics` | GET | Get real-time Solana metrics |
+| `/api/queue` | GET | View current transaction queue |
+| `/api/queue` | POST | Add transaction to queue |
+| `/api/retry` | POST | Retry all pending transactions |
+| `/api/flush` | POST | Flush transaction queue |
+| `/api/health` | GET | Health check endpoint |
+
+See `safetx-backend/README.md` for detailed API documentation.
+
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+## Build for Production
+
+**Frontend:**
 ```bat
 npm run build
 npm run preview
 ```
+
+**Backend:**
+```bat
+cd safetx-backend
+npm start
+```
+
+## 🧪 Testing & Verification
+
+**Quick Health Check:**
+```bash
+# 1. Test backend
+curl http://localhost:5000/api/health
+
+# 2. Test metrics endpoint
+curl http://localhost:5000/api/metrics
+
+# 3. Access frontend
+# Open http://localhost:5173 and connect wallet
+```
+
+**Comprehensive Testing:**
+- See `TESTING.md` for full test suite
+- See `ALIGNMENT_VERIFICATION.md` for frontend-backend alignment verification
+
+**Expected Behavior:**
+- ✅ "LIVE" badge appears when backend connected
+- ✅ "DISCONNECTED" badge appears when backend offline
+- ✅ Metrics update every 5 seconds
+- ✅ Toggle between Live/Mock data works
+- ✅ Retry and Flush buttons functional
 
 ## Notes
 

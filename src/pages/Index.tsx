@@ -11,28 +11,19 @@ import { NetworkTimeline } from "@/components/NetworkTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SafeTxPanel } from "@/components/SafeTxPanel";
 import mockDataRaw from "@/data/mockMetrics.json";
-
-interface MetricsData {
-  tps: number;
-  slot_time: number;
-  success_rate: number;
-  queue_size: number;
-  retry_count: number;
-  latest_slot: number;
-  current_leader: string;
-  network_status: "green" | "yellow" | "red";
-  tps_history: number[];
-  recent_transactions: Array<{
-    tx_id: string;
-    status: "queued" | "processed" | "failed";
-    time: string;
-  }>;
-}
+import { getStoredPubkey } from "@/lib/wallet";
+import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const mockData = mockDataRaw as MetricsData;
 
 const Index = () => {
   const [metrics, setMetrics] = useState(mockData);
+  const [useLiveData, setUseLiveData] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [backendConnected, setBackendConnected] = useState(false);
+  const { toast } = useToast();
   const [blockHeight, setBlockHeight] = useState(metrics.latest_slot - 1);
   const [epoch, setEpoch] = useState(532);
   const [networkCapacity, setNetworkCapacity] = useState(82);
@@ -135,44 +126,100 @@ const Index = () => {
   ];
 
   useEffect(() => {
-    // Simulate live updates every 3 seconds
-    const interval = setInterval(() => {
-      setMetrics((prev) => {
-        const newQueue = Math.max(0, prev.queue_size + (Math.random() < 0.4 ? 1 : -1));
-        const newRetry = autoRetry && newQueue > 0 ? prev.retry_count + Math.floor(Math.random() * 2) : prev.retry_count;
-        const newLatestSlot = prev.latest_slot + 1;
+    // Fetch live metrics from backend
+    const loadMetrics = async () => {
+      if (!useLiveData) {
+        setBackendConnected(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchMetrics();
+        setMetrics(data);
+        setBlockHeight(data.latest_slot - 1);
+        setBackendConnected(true);
+        
+        // Update history arrays
+        setSuccessRateHistory(prev => {
+          const newHistory = [...prev, data.success_rate];
+          return newHistory.slice(-6);
+        });
+        setSlotTimeHistory(prev => {
+          const newHistory = [...prev, data.slot_time];
+          return newHistory.slice(-6);
+        });
+        
+        // Clear error on successful fetch
+        if (error) {
+          toast({
+            title: "✅ Backend Connected",
+            description: "Successfully connected to SafeTx backend.",
+          });
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch metrics:', err);
+        setError(err.message);
+        setBackendConnected(false);
+        
+        // Only show toast on first error or after successful connection
+        if (!error) {
+          toast({
+            title: "Backend Connection Error",
+            description: "Unable to fetch live data. Make sure backend is running on port 5000.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        return {
-          ...prev,
-          tps: Math.floor(1000 + Math.random() * 500),
-          slot_time: Number((0.3 + Math.random() * 0.3).toFixed(2)),
-          success_rate: Number((95 + Math.random() * 4).toFixed(1)),
-          queue_size: newQueue,
-          retry_count: newRetry,
-          latest_slot: newLatestSlot,
-          current_leader: Math.random() < 0.1 ? `Val${Math.floor(Math.random()*9)}x...${Math.floor(Math.random()*9)}2p` : prev.current_leader,
-        };
-      });
-      setBlockHeight((prev) => prev + 1);
-      setNetworkCapacity(Math.floor(75 + Math.random() * 15));
-    }, 3000);
+    loadMetrics();
+    const interval = setInterval(loadMetrics, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
-  }, [autoRetry]);
+  }, [useLiveData, toast, error]);
 
-  const handleRetryNow = () => {
-    setMetrics((prev) => ({
-      ...prev,
-      retry_count: prev.retry_count + prev.queue_size,
-      queue_size: 0,
-    }));
+  const handleRetryNow = async () => {
+    try {
+      await retryPendingTransactions();
+      toast({
+        title: "Transactions Retried",
+        description: `Retrying ${metrics.queue_size} pending transactions.`,
+      });
+      // Refresh metrics
+      const data = await fetchMetrics();
+      setMetrics(data);
+    } catch (err: any) {
+      console.error('Retry failed:', err);
+      toast({
+        title: "Retry Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFlushQueue = () => {
-    setMetrics((prev) => ({
-      ...prev,
-      queue_size: 0,
-    }));
+  const handleFlushQueue = async () => {
+    try {
+      await flushQueue();
+      toast({
+        title: "Queue Flushed",
+        description: `Removed ${metrics.queue_size} transactions from queue.`,
+      });
+      // Refresh metrics
+      const data = await fetchMetrics();
+      setMetrics(data);
+    } catch (err: any) {
+      console.error('Flush failed:', err);
+      toast({
+        title: "Flush Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const getMetricStatus = (metricName: string, value: number): "green" | "yellow" | "red" => {
@@ -208,32 +255,73 @@ const Index = () => {
     return Math.max(0, Math.min(100, Math.round((base - penalty) * 100)));
   })();
 
+  const walletKey = getStoredPubkey();
+  const shortKey = walletKey ? `${walletKey.slice(0, 4)}...${walletKey.slice(-4)}` : undefined;
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-[1800px] mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-3 w-3 rounded-full bg-primary animate-pulse-glow" />
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              SafeTx Protocol
-            </h1>
+        {/* Compact Top Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 border border-border/50 rounded-xl bg-card/50">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
+            <span className="font-semibold tracking-wide">SafeTx Dashboard</span>
+            {useLiveData && backendConnected && (
+              <span className="text-xs px-2 py-0.5 rounded bg-success/20 text-success border border-success/40 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                LIVE
+              </span>
+            )}
+            {useLiveData && !backendConnected && !isLoading && (
+              <span className="text-xs px-2 py-0.5 rounded bg-destructive/20 text-destructive border border-destructive/40">
+                DISCONNECTED
+              </span>
+            )}
+            {isLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating...</span>}
           </div>
-          <p className="text-xl text-muted-foreground tracking-wide">
-            Testnet SafeTx — Detect congestion, queue transactions, auto-retry for smoother UX
-          </p>
-          <p className="text-sm text-accent uppercase tracking-widest font-bold">
-            Prototype • Real-Time Analytics • SDK-ready
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Health Score</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setUseLiveData(!useLiveData)}
+              className={`text-xs px-3 py-1 rounded border transition-colors ${
+                useLiveData 
+                  ? 'border-success/40 bg-success/10 hover:bg-success/20' 
+                  : 'border-border hover:bg-accent/10'
+              }`}
+            >
+              {useLiveData ? '📡 Live Data' : '🔄 Mock Data'}
+            </button>
             <span className={`text-xs px-2 py-1 rounded-full border font-mono ${
               healthScore > 85 ? 'border-success/40 text-success' : healthScore > 65 ? 'border-warning/40 text-warning' : 'border-destructive/40 text-destructive'
             }`}>
-              {healthScore}/100
+              Health {healthScore}/100
             </span>
+            {shortKey && (
+              <span className="text-xs text-muted-foreground font-mono">{shortKey}</span>
+            )}
           </div>
         </div>
+
+        {error && !backendConnected && useLiveData && (
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm flex items-start justify-between">
+            <div className="flex-1">
+              <p className="font-semibold mb-1">⚠️ Backend Connection Error</p>
+              <p className="text-xs opacity-90">Make sure the backend server is running:</p>
+              <code className="text-xs block mt-2 p-2 bg-background/50 rounded">
+                cd safetx-backend && node server.js
+              </code>
+            </div>
+            <button
+              onClick={() => {
+                setError(null);
+                setUseLiveData(false);
+                setTimeout(() => setUseLiveData(true), 100);
+              }}
+              className="ml-3 px-3 py-1 text-xs rounded border border-destructive/40 hover:bg-destructive/20 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Status Banner */}
         <StatusBanner status={metrics.network_status as "green" | "yellow" | "red"} />
