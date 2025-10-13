@@ -1,0 +1,15 @@
+{
+  "tps": 1243,
+  "slot_time": 0.42,
+  "success_rate": 98.4,
+  "queue_size": 2,
+  "network_status": "green",
+  "tps_history": [1200, 1150, 1300, 1100, 1250, 1400],
+  "recent_transactions": [
+    { "tx_id": "4Ghs1..K7X", "status": "queued", "time": "12:45:20" },
+    { "tx_id": "5Nxy3..T2A", "status": "processed", "time": "12:44:15" },
+    { "tx_id": "9Zae7..L0F", "status": "queued", "time": "12:43:02" },
+    { "tx_id": "2Bsd4..W8P", "status": "processed", "time": "12:41:58" },
+    { "tx_id": "7Lpr8..Z3D", "status": "failed", "time": "12:40:50" }
+  ]
+}
