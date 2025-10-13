@@ -9,6 +9,7 @@ import { ValidatorStats } from "@/components/ValidatorStats";
 import { AlertSystem } from "@/components/AlertSystem";
 import { NetworkTimeline } from "@/components/NetworkTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SafeTxPanel } from "@/components/SafeTxPanel";
 import mockDataRaw from "@/data/mockMetrics.json";
 
 interface MetricsData {
@@ -16,6 +17,9 @@ interface MetricsData {
   slot_time: number;
   success_rate: number;
   queue_size: number;
+  retry_count: number;
+  latest_slot: number;
+  current_leader: string;
   network_status: "green" | "yellow" | "red";
   tps_history: number[];
   recent_transactions: Array<{
@@ -29,12 +33,13 @@ const mockData = mockDataRaw as MetricsData;
 
 const Index = () => {
   const [metrics, setMetrics] = useState(mockData);
-  const [blockHeight, setBlockHeight] = useState(245789234);
+  const [blockHeight, setBlockHeight] = useState(metrics.latest_slot - 1);
   const [epoch, setEpoch] = useState(532);
   const [networkCapacity, setNetworkCapacity] = useState(82);
   const [activeValidators, setActiveValidators] = useState(1852);
   const [successRateHistory, setSuccessRateHistory] = useState([98.2, 98.5, 97.9, 98.8, 98.1, 98.4]);
   const [slotTimeHistory, setSlotTimeHistory] = useState([0.41, 0.39, 0.43, 0.38, 0.44, 0.42]);
+  const [autoRetry, setAutoRetry] = useState(true);
 
   const [alerts, setAlerts] = useState([
     {
@@ -132,19 +137,43 @@ const Index = () => {
   useEffect(() => {
     // Simulate live updates every 3 seconds
     const interval = setInterval(() => {
-      setMetrics((prev) => ({
-        ...prev,
-        tps: Math.floor(1000 + Math.random() * 500),
-        slot_time: Number((0.3 + Math.random() * 0.3).toFixed(2)),
-        success_rate: Number((95 + Math.random() * 4).toFixed(1)),
-        queue_size: Math.floor(Math.random() * 10),
-      }));
+      setMetrics((prev) => {
+        const newQueue = Math.max(0, prev.queue_size + (Math.random() < 0.4 ? 1 : -1));
+        const newRetry = autoRetry && newQueue > 0 ? prev.retry_count + Math.floor(Math.random() * 2) : prev.retry_count;
+        const newLatestSlot = prev.latest_slot + 1;
+
+        return {
+          ...prev,
+          tps: Math.floor(1000 + Math.random() * 500),
+          slot_time: Number((0.3 + Math.random() * 0.3).toFixed(2)),
+          success_rate: Number((95 + Math.random() * 4).toFixed(1)),
+          queue_size: newQueue,
+          retry_count: newRetry,
+          latest_slot: newLatestSlot,
+          current_leader: Math.random() < 0.1 ? `Val${Math.floor(Math.random()*9)}x...${Math.floor(Math.random()*9)}2p` : prev.current_leader,
+        };
+      });
       setBlockHeight((prev) => prev + 1);
       setNetworkCapacity(Math.floor(75 + Math.random() * 15));
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [autoRetry]);
+
+  const handleRetryNow = () => {
+    setMetrics((prev) => ({
+      ...prev,
+      retry_count: prev.retry_count + prev.queue_size,
+      queue_size: 0,
+    }));
+  };
+
+  const handleFlushQueue = () => {
+    setMetrics((prev) => ({
+      ...prev,
+      queue_size: 0,
+    }));
+  };
 
   const getMetricStatus = (metricName: string, value: number): "green" | "yellow" | "red" => {
     switch (metricName) {
@@ -169,6 +198,16 @@ const Index = () => {
     }
   };
 
+  const healthScore = (() => {
+    // Simple composite score: TPS weight 0.4, success rate 0.4, slot time inverse 0.2, penalties for queue
+    const tpsNorm = Math.min(metrics.tps / 1500, 1);
+    const successNorm = Math.min(metrics.success_rate / 100, 1);
+    const slotNorm = Math.max(0, 1 - (metrics.slot_time - 0.4)); // optimal around 0.4s
+    const base = tpsNorm * 0.4 + successNorm * 0.4 + slotNorm * 0.2;
+    const penalty = Math.min(metrics.queue_size / 20, 0.25);
+    return Math.max(0, Math.min(100, Math.round((base - penalty) * 100)));
+  })();
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-[1800px] mx-auto space-y-8">
@@ -181,11 +220,19 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground tracking-wide">
-            Solana Network Health Monitor - Advanced Dashboard
+            Testnet SafeTx — Detect congestion, queue transactions, auto-retry for smoother UX
           </p>
           <p className="text-sm text-accent uppercase tracking-widest font-bold">
-            Testnet Prototype • Real-Time Analytics
+            Prototype • Real-Time Analytics • SDK-ready
           </p>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">Health Score</span>
+            <span className={`text-xs px-2 py-1 rounded-full border font-mono ${
+              healthScore > 85 ? 'border-success/40 text-success' : healthScore > 65 ? 'border-warning/40 text-warning' : 'border-destructive/40 text-destructive'
+            }`}>
+              {healthScore}/100
+            </span>
+          </div>
         </div>
 
         {/* Status Banner */}
@@ -195,6 +242,18 @@ const Index = () => {
         <AlertSystem
           alerts={alerts}
           onDismiss={(id) => setAlerts(alerts.filter((a) => a.id !== id))}
+        />
+
+        {/* SafeTx Panel */}
+        <SafeTxPanel
+          queueSize={metrics.queue_size}
+          retryCount={metrics.retry_count}
+          latestSlot={metrics.latest_slot}
+          currentLeader={metrics.current_leader}
+          autoRetry={autoRetry}
+          onToggleAutoRetry={setAutoRetry}
+          onRetryNow={handleRetryNow}
+          onFlushQueue={handleFlushQueue}
         />
 
         {/* Primary Metrics Grid */}

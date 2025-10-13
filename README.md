@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# SafeTx Protocol — Solana Network Reliability Dashboard
 
-## Project info
+SafeTx is a testnet-focused Solana dashboard that detects network congestion, monitors transaction reliability, and showcases a retry/queue mechanism designed to improve UX during heavy load.
 
-**URL**: https://lovable.dev/projects/f364838f-2d55-42b7-ac26-b18d0551007c
+This repo contains the frontend dashboard portion of the stack (React + Tailwind + shadcn + Recharts). Off-chain services, Anchor programs, and SDK are out of scope for this UI demo but are represented in the UI via metrics and controls.
 
-## How can I edit this code?
+## Core Components
 
-There are several ways of editing your application.
+- Network Monitor (Off-Chain Service) — simulated via live-updating metrics (TPS, slot time, success rate, queue size)
+- Smart Contract (Anchor Program) — represented conceptually by queued tx metadata and leader/slot visuals
+- Frontend Dashboard (this repo) — health indicator, queue size, retry count, latest slots, validator stats, charts
+- SafeTx SDK (Optional) — modeled via Auto-Retry toggle and Retry/Flush actions
 
-**Use Lovable**
+## MVP Features (Hackathon-ready)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f364838f-2d55-42b7-ac26-b18d0551007c) and start prompting.
+- Network Health Indicator (green/yellow/red) and Health Score 0–100
+- Live metrics: TPS, Slot Time, Success Rate, Queue Size
+- SafeTx Control Panel: Auto-Retry toggle, Retry Pending, Flush Queue
+- Block Monitor and Validator Stats
+- Transaction Explorer with filtering and statuses (processed/queued/failed)
+- Activity Timeline and composite analytics charts
 
-Changes made via Lovable will be committed automatically to this repo.
+## Tech Stack
 
-**Use your preferred IDE**
+- Vite, TypeScript, React
+- Tailwind CSS, shadcn/ui
+- Recharts
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Prereqs: Node.js 18+ and npm
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+```bat
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Build for production:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bat
+npm run build
+npm run preview
+```
 
-**Use GitHub Codespaces**
+## Notes
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Metrics are simulated in the UI and driven from `src/data/mockMetrics.json` plus periodic random updates.
+- The SafeTx panel shows queue size, retry count, latest slot, and current leader with interactive controls.
+- To integrate with a real off-chain monitor or Anchor program, replace the mock data and update the state logic in `src/pages/Index.tsx`.
 
-## What technologies are used for this project?
+## Folder Structure
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f364838f-2d55-42b7-ac26-b18d0551007c) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- `src/pages/Index.tsx` — main dashboard
+- `src/components/SafeTxPanel.tsx` — SafeTx controls and status
+- `src/components/*` — reusable cards, charts, tables
+- `src/data/mockMetrics.json` — initial mock metrics

@@ -3,6 +3,9 @@
   "slot_time": 0.42,
   "success_rate": 98.4,
   "queue_size": 2,
+  "retry_count": 0,
+  "latest_slot": 245789235,
+  "current_leader": "Val8x...K2p",
   "network_status": "green",
   "tps_history": [1200, 1150, 1300, 1100, 1250, 1400],
   "recent_transactions": [

@@ -9,21 +9,21 @@ export const StatusBanner = ({ status }: StatusBannerProps) => {
     switch (status) {
       case "green":
         return {
-          text: "Network Operating Normally",
+          text: "Network Healthy",
           bgClass: "bg-success/10 border-success/30",
           textClass: "text-success",
           glowClass: "glow-success",
         };
       case "yellow":
         return {
-          text: "Moderate Network Congestion",
+          text: "Moderate Congestion",
           bgClass: "bg-warning/10 border-warning/30",
           textClass: "text-warning",
           glowClass: "glow-warning",
         };
       case "red":
         return {
-          text: "High Network Congestion - Delays Expected",
+          text: "Severe Congestion — Expect Delays",
           bgClass: "bg-destructive/10 border-destructive/30",
           textClass: "text-destructive",
           glowClass: "glow-danger",
