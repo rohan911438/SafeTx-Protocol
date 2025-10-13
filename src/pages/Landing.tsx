@@ -55,7 +55,7 @@ const Landing = () => {
         </div>
 
         {/* Hero */}
-        <section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
+    <section className="max-w-6xl mx-auto px-4 py-12 md:py-16">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
               <div className="h-3 w-3 rounded-full bg-primary animate-pulse-glow" />
@@ -88,7 +88,7 @@ const Landing = () => {
         {/* Feature grid (summary) removed */}
 
         {/* Feature deep dive (compact) */}
-        <section id="features" className="max-w-6xl mx-auto px-4 mt-10">
+    <section id="features" className="max-w-6xl mx-auto px-4 mt-8">
           <div className="mb-6 text-center">
             <h3 className="text-2xl font-semibold">Feature Deep Dive</h3>
             <p className="text-sm text-muted-foreground">Short and sweet: how SafeTx improves reliability.</p>
@@ -116,7 +116,7 @@ const Landing = () => {
         </section>
 
         {/* Toolkit (compact, enhanced UI) */}
-        <section className="max-w-6xl mx-auto px-4 mt-10">
+    <section className="max-w-6xl mx-auto px-4 mt-8">
           <Card className="bg-card/60 border-2 border-accent/30 glow-accent">
             <CardHeader>
               <CardTitle>Everything you need for resilient Solana UX</CardTitle>
@@ -154,7 +154,7 @@ const Landing = () => {
         </section>
 
         {/* Mini live preview */}
-        <section className="max-w-6xl mx-auto px-4 mt-14">
+    <section className="max-w-6xl mx-auto px-4 mt-10">
           <Card className="bg-card/50 backdrop-blur-sm border-2 border-primary/20 glow-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
@@ -176,7 +176,7 @@ const Landing = () => {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="max-w-6xl mx-auto px-4 mt-16">
+    <section id="pricing" className="max-w-6xl mx-auto px-4 mt-12">
           <Card className="bg-card/50 border-2 border-border/40">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -255,7 +255,7 @@ const Landing = () => {
         </section>
 
         {/* How it works */}
-        <section id="how" className="max-w-6xl mx-auto px-4 mt-14">
+    <section id="how" className="max-w-6xl mx-auto px-4 mt-12">
           <div className="mb-6 text-center">
             <h3 className="text-2xl font-semibold">How SafeTx Works</h3>
             <p className="text-sm text-muted-foreground">Three layers that turn congestion into a smoother experience.</p>
@@ -309,7 +309,7 @@ const Landing = () => {
         </section>
 
         {/* Architecture overview */}
-        <section className="max-w-6xl mx-auto px-4 mt-14">
+    <section className="max-w-6xl mx-auto px-4 mt-12">
           <div className="mb-6 text-center">
             <h3 className="text-2xl font-semibold">Core Architecture</h3>
             <p className="text-sm text-muted-foreground">Four components working together to keep transactions smooth.</p>
@@ -370,7 +370,7 @@ const Landing = () => {
         </section>
 
         {/* CTA */}
-        <section className="max-w-6xl mx-auto px-4 mt-14 mb-20">
+    <section className="max-w-6xl mx-auto px-4 mt-12 mb-16">
           <div className="text-center space-y-3">
             <h3 className="text-2xl font-semibold">Ready to try SafeTx?</h3>
             <p className="text-sm text-muted-foreground">Connect your Phantom wallet to access the live dashboard.</p>
