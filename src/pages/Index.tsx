@@ -446,8 +446,7 @@ const Index = () => {
         {/* Footer */}
         <div className="text-center py-8 border-t border-border/50 mt-12">
           <p className="text-sm text-muted-foreground">
-            Built for{" "}
-            <span className="text-primary font-bold">Cyberpunk Solana Hackathon 2025</span>
+            Built with ❤️ for Solana builders
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             Powered by Solana Testnet • Real-time Network Monitoring & Analytics
