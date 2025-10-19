@@ -1,0 +1,25 @@
+[package]
+name = "safetx_program"
+version = "0.1.0"
+edition = "2021"
+authors = ["SafeTx Protocol"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "safetx_program"
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+solana-program = "1.18.25"
+thiserror = "1.0"
+bytemuck = { version = "1.15", features = ["derive"] }
+borsh = { version = "1.5", features = ["derive"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

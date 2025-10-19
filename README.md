@@ -7,6 +7,7 @@ This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + 
 ## Core Components
 
 - **Backend API** (safetx-backend/) — Node.js server that fetches real Solana testnet metrics via RPC
+- **Contracts** (contracts/solana) — SafeTx on-chain program with a PDA metrics registry and ring buffer
 - **Network Monitor** — Real-time TPS, slot time, success rate, queue size tracking
 - **Smart Contract Layer** — Represented conceptually by queued tx metadata and leader/slot visuals
 - **Frontend Dashboard** (src/) — Health indicator, queue size, retry count, latest slots, validator stats, charts
@@ -23,6 +24,7 @@ This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + 
 - ✅ Activity Timeline and composite analytics charts
 - ✅ Transaction Queue API endpoints
 - ✅ Toggle between Live and Mock data
+- ✅ Minimal on-chain integration for storing summarized metrics
 
 ## Tech Stack
 
@@ -32,6 +34,33 @@ This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + 
 - Recharts
 
 **Backend:**
+## On-chain program quickstart
+
+Build and deploy the Solana program (Windows-friendly):
+
+1) Install Solana CLI (v1.18+), set to testnet, and ensure Rust toolchain is set up.
+2) Build the program:
+
+```
+cd contracts/solana/safetx-program
+cargo build-sbf
+```
+
+3) Deploy:
+
+```
+solana program deploy target/sbf-solana-solana/release/safetx_program.so
+```
+
+4) Use the helper client (replace SAFETX_PROGRAM_ID env var with your deployed program id):
+
+```
+set SAFETX_PROGRAM_ID=<YourProgramId>
+npm run sol:program:init
+npm run sol:program:push
+```
+
+The client uses your ~/.config/solana/id.json keypair.
 - Node.js, Express.js
 - @solana/web3.js
 - CORS
