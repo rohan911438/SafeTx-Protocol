@@ -42,6 +42,22 @@ This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + 
 - Node.js 18+ and npm
 - Phantom wallet browser extension (for dashboard access)
 
+### Optional: MagicBlock Streaming (SSE)
+To enable real-time streaming from the MagicBlock server, ensure:
+
+1) MagicBlock server is running
+	- Open a terminal:
+	  - cd safetx-backend
+	  - node magicblock-server.js
+	- Default port is 5001 (configured in `safetx-backend/.env.magicblock`)
+
+2) Frontend knows the MagicBlock URL
+	- Root `.env` contains:
+	  - VITE_MAGICBLOCK_URL=http://localhost:5001
+
+3) In the dashboard, toggle the “SSE ON/OFF” button in the top bar
+	- When ON, the dashboard streams metrics via Server-Sent Events from `/metrics/stream`
+
 ### 1️⃣ Install Frontend Dependencies
 
 ```bat

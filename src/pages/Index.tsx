@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SafeTxPanel } from "@/components/SafeTxPanel";
 import mockDataRaw from "@/data/mockMetrics.json";
 import { getStoredPubkey } from "@/lib/wallet";
-import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData } from "@/lib/api";
+import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData, subscribeMagicblockSSE, mapMagicblockToMetricsData, getMagicblockHealth } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 const mockData = mockDataRaw as MetricsData;
@@ -31,6 +31,9 @@ const Index = () => {
   const [successRateHistory, setSuccessRateHistory] = useState([98.2, 98.5, 97.9, 98.8, 98.1, 98.4]);
   const [slotTimeHistory, setSlotTimeHistory] = useState([0.41, 0.39, 0.43, 0.38, 0.44, 0.42]);
   const [autoRetry, setAutoRetry] = useState(true);
+  const [useSSE, setUseSSE] = useState(false);
+  const [magicblockStatus, setMagicblockStatus] = useState<'connected'|'error'|'disconnected'>('disconnected');
+  const [lastMBRoute, setLastMBRoute] = useState<string | null>(null);
 
   const [alerts, setAlerts] = useState([
     {
@@ -126,9 +129,9 @@ const Index = () => {
   ];
 
   useEffect(() => {
-    // Fetch live metrics from backend
+    // Fetch live metrics from backend (polling)
     const loadMetrics = async () => {
-      if (!useLiveData) {
+      if (!useLiveData || useSSE) {
         setBackendConnected(false);
         return;
       }
@@ -180,7 +183,48 @@ const Index = () => {
     const interval = setInterval(loadMetrics, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
-  }, [useLiveData, toast, error]);
+  }, [useLiveData, useSSE, toast, error]);
+
+  // MagicBlock SSE subscription
+  useEffect(() => {
+    if (!useSSE) return;
+
+    // initial health check (non-blocking)
+    getMagicblockHealth().then((h) => {
+      if (h?.magicblock?.routesAvailable > 0) {
+        setMagicblockStatus(h.magicblock.status || 'connected');
+      }
+    }).catch(() => {});
+
+    const unsubscribe = subscribeMagicblockSSE((mb) => {
+      setMetrics((prev) => mapMagicblockToMetricsData(mb, prev));
+      setBackendConnected(true);
+      setMagicblockStatus((mb.magicblockStatus as any) || 'connected');
+      setLastMBRoute(mb.lastMagicBlockRoute ?? null);
+
+      // update derived histories
+      setSuccessRateHistory(prev => {
+        const val = typeof mb.successRate === 'number' ? mb.successRate : prev[prev.length - 1];
+        const arr = [...prev, val];
+        return arr.slice(-6);
+      });
+      setSlotTimeHistory(prev => {
+        const val = typeof mb.slotTime === 'number' ? mb.slotTime : prev[prev.length - 1];
+        const arr = [...prev, val];
+        return arr.slice(-6);
+      });
+    }, (err) => {
+      console.error('SSE error:', err);
+      setMagicblockStatus('error');
+      setBackendConnected(false);
+    });
+
+    return () => {
+      unsubscribe?.();
+      setMagicblockStatus('disconnected');
+      setBackendConnected(false);
+    };
+  }, [useSSE]);
 
   const handleRetryNow = async () => {
     try {
@@ -290,6 +334,17 @@ const Index = () => {
             >
               {useLiveData ? '📡 Live Data' : '🔄 Mock Data'}
             </button>
+            <button
+              onClick={() => setUseSSE((v) => !v)}
+              className={`text-xs px-3 py-1 rounded border transition-colors ${
+                useSSE 
+                  ? 'border-primary/40 bg-primary/10 hover:bg-primary/20' 
+                  : 'border-border hover:bg-accent/10'
+              }`}
+              title="Toggle real-time streaming via MagicBlock SSE"
+            >
+              {useSSE ? '⚡ SSE ON' : 'SSE OFF'}
+            </button>
             <span className={`text-xs px-2 py-1 rounded-full border font-mono ${
               healthScore > 85 ? 'border-success/40 text-success' : healthScore > 65 ? 'border-warning/40 text-warning' : 'border-destructive/40 text-destructive'
             }`}>
@@ -301,7 +356,7 @@ const Index = () => {
           </div>
         </div>
 
-        {error && !backendConnected && useLiveData && (
+        {error && !backendConnected && useLiveData && !useSSE && (
           <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm flex items-start justify-between">
             <div className="flex-1">
               <p className="font-semibold mb-1">⚠️ Backend Connection Error</p>
@@ -320,6 +375,22 @@ const Index = () => {
             >
               Retry
             </button>
+          </div>
+        )}
+
+        {/* MagicBlock status chip */}
+        {useSSE && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className={`px-2 py-0.5 rounded border ${
+              magicblockStatus === 'connected' ? 'border-success/40 text-success' : magicblockStatus === 'error' ? 'border-destructive/40 text-destructive' : 'border-border'
+            }`}>
+              MagicBlock: {magicblockStatus}
+            </span>
+            {lastMBRoute && (
+              <span className="px-2 py-0.5 rounded border border-border/50 truncate max-w-[320px]" title={lastMBRoute}>
+                {lastMBRoute}
+              </span>
+            )}
           </div>
         )}
 

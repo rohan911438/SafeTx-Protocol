@@ -1,6 +1,7 @@
-// API service to fetch metrics from SafeTx backend
+// API service to fetch metrics from SafeTx backend and MagicBlock streaming server
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const MAGICBLOCK_BASE_URL = import.meta.env.VITE_MAGICBLOCK_URL || 'http://localhost:5001';
 
 export interface MetricsData {
   tps: number;
@@ -24,6 +25,31 @@ export interface QueueTransaction {
   sender: string;
   type?: string;
   fee?: string;
+}
+
+// MagicBlock streaming metrics shape
+export interface MagicblockMetrics {
+  tps: number;
+  slot: number;
+  blockTime: number; // unix seconds
+  slotTime: number;  // seconds
+  successRate: number;
+  timestamp: number; // ms
+  magicblockStatus?: string;
+  lastMagicBlockRoute?: string | null;
+  routesAvailable?: number;
+}
+
+// Map MagicBlock metrics into our dashboard MetricsData (best-effort)
+export function mapMagicblockToMetricsData(mb: MagicblockMetrics, prev: MetricsData): MetricsData {
+  return {
+    ...prev,
+    tps: mb.tps ?? prev.tps,
+    slot_time: typeof mb.slotTime === 'number' ? Number(mb.slotTime.toFixed(2)) : prev.slot_time,
+    success_rate: mb.successRate ?? prev.success_rate,
+    latest_slot: mb.slot ?? prev.latest_slot,
+    // keep existing values for fields not provided by MagicBlock
+  };
 }
 
 /**
@@ -100,4 +126,45 @@ export async function checkHealth(): Promise<any> {
     throw new Error(`Backend health check failed: ${response.statusText}`);
   }
   return response.json();
+}
+
+// ===================== MagicBlock server client =====================
+
+export async function getMagicblockHealth(): Promise<any> {
+  const res = await fetch(`${MAGICBLOCK_BASE_URL}/health`);
+  if (!res.ok) throw new Error(`MagicBlock health failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getMagicblockRoutes(): Promise<{ success: boolean; count: number; routes: string[]; raw?: any[]; lastRefresh?: string; router: string; }>{
+  const res = await fetch(`${MAGICBLOCK_BASE_URL}/magicblock/routes`);
+  if (!res.ok) throw new Error(`MagicBlock routes failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getMagicblockMetrics(): Promise<MagicblockMetrics> {
+  const res = await fetch(`${MAGICBLOCK_BASE_URL}/metrics`);
+  if (!res.ok) throw new Error(`MagicBlock metrics failed: ${res.statusText}`);
+  return res.json();
+}
+
+export function subscribeMagicblockSSE(
+  onMessage: (data: MagicblockMetrics) => void,
+  onError?: (err: any) => void
+) {
+  const source = new EventSource(`${MAGICBLOCK_BASE_URL}/metrics/stream`);
+  source.onmessage = (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      onMessage(data);
+    } catch (e) {
+      onError?.(e);
+    }
+  };
+  source.onerror = (err) => {
+    onError?.(err);
+  };
+  return () => {
+    try { source.close(); } catch {}
+  };
 }
