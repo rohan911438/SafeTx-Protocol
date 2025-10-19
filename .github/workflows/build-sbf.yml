@@ -13,6 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/solana/safetx-program/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/solana/safetx-program/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Pull Solana Docker image
         run: |
           docker pull solanalabs/solana:stable
@@ -21,6 +32,7 @@ jobs:
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE":/work \
+            -v "$HOME/.cargo":/root/.cargo \
             -w /work/contracts/solana/safetx-program \
             solanalabs/solana:stable \
             bash -lc "cargo build-sbf"
