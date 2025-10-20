@@ -11,9 +11,14 @@
     "preview": "vite preview",
     "sol:setup": "node ./scripts/solana/setup-wallet.cjs",
     "sol:balance": "node ./scripts/solana/check-balance.cjs",
+    "sol:balance:me:devnet": "node ./scripts/solana/check-balance.cjs \"\" https://api.devnet.solana.com",
+  "sol:key:import": "node ./scripts/solana/import-keypair.cjs",
     "sol:program:init": "node ./scripts/solana/safetx-client.cjs init",
     "sol:program:push": "node ./scripts/solana/safetx-client.cjs push",
-    "sol:program:deploy": "node ./scripts/solana/deploy-contract.cjs"
+    "sol:program:init:devnet": "node ./scripts/solana/safetx-client.cjs init https://api.devnet.solana.com",
+    "sol:program:push:devnet": "node ./scripts/solana/safetx-client.cjs push https://api.devnet.solana.com",
+    "sol:program:deploy": "node ./scripts/solana/deploy-contract.cjs",
+    "sol:program:deploy:linux": "bash ./scripts/solana/deploy-linux.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

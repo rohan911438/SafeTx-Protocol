@@ -22,8 +22,10 @@ async function checkBalance(address, rpcUrl) {
     const rpcUrl = args[1];
 
     if (!address) {
-      // Fallback to local id.json if no address passed
-      const keyPath = path.join(getSolanaConfigDir(), 'id.json');
+      // Fallback to SOLANA_KEYPAIR env or local id.json if no address passed
+      const keyPath = process.env.SOLANA_KEYPAIR
+        ? path.resolve(process.env.SOLANA_KEYPAIR)
+        : path.join(getSolanaConfigDir(), 'id.json');
       const secretKey = JSON.parse(fs.readFileSync(keyPath));
       const keypair = Keypair.fromSecretKey(Buffer.from(secretKey));
       address = keypair.publicKey.toString();

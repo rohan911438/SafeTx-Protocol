@@ -5,7 +5,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    borsh1::try_from_slice_unchecked,
     entrypoint,
     entrypoint::ProgramResult,
     msg,
@@ -21,7 +20,7 @@ entrypoint!(process_instruction);
 // Program constants
 pub const METRIC_CAPACITY: u16 = 256; // ring buffer length
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Copy, Debug)]
+#[derive(BorshSerialize, BorshDeserialize, Clone, Copy, Debug, Default)]
 pub struct MetricSnapshot {
     pub tps: u32,
     pub slot: u64,
@@ -105,15 +104,16 @@ fn init_registry(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult
         )?;
     }
 
-    // Initialize data
-    let mut state: Registry = try_from_slice_unchecked(&registry.data.borrow())?;
-    state.admin = *admin.key;
-    state.bump = bump;
-    state.head = 0;
-    state.count = 0;
-    state.capacity = METRIC_CAPACITY;
-    state.reserved = [0; 5];
-    // buffer left zeroed
+    // Initialize data fresh (don't try to deserialize zeroed bytes)
+    let mut state = Registry {
+        admin: *admin.key,
+        bump,
+        head: 0,
+        count: 0,
+        capacity: METRIC_CAPACITY,
+        reserved: [0; 5],
+        buffer: [MetricSnapshot::default(); METRIC_CAPACITY as usize],
+    };
     state.serialize(&mut &mut registry.data.borrow_mut()[..])?;
 
     msg!("SafeTx registry initialized. capacity={}", METRIC_CAPACITY);
@@ -136,7 +136,7 @@ fn push_metric(program_id: &Pubkey, accounts: &[AccountInfo], s: MetricSnapshot)
         return Err(ProgramError::InvalidSeeds);
     }
 
-    let mut state: Registry = try_from_slice_unchecked(&registry.data.borrow())?;
+    let mut state: Registry = Registry::try_from_slice(&registry.data.borrow())?;
 
     // Only admin can push
     if state.admin != *admin.key {

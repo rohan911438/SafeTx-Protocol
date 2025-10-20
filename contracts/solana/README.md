@@ -1,5 +1,8 @@
 # SafeTx Solana Program
 
+Deployed Program ID: GHurqnc1CCe9NaBvwvWgBz3qmRP9rePDxNwf5eEgqCD
+
+
 This program stores compact network metrics in a PDA-backed ring buffer.
 
 - PDA seeds: ["safetx", admin_pubkey]

@@ -30,7 +30,8 @@ const schema = new Map([
     ['slot', 'u64'],
     ['slot_time_ms', 'u32'],
     ['success_bps', 'u16'],
-    ['ts', 'i64'],
+    // Rust expects u64 for ts; ensure schema matches to avoid decode errors
+    ['ts', 'u64'],
   ]} ],
   [SafetxIxPush, { kind: 'struct', fields: [['s', MetricSnapshot]] }],
 ]);
@@ -51,7 +52,10 @@ function getSolanaConfigDir() {
 }
 
 async function loadPayer() {
-  const keyPath = path.join(getSolanaConfigDir(), 'id.json');
+  // Allow overriding the keypair path via SOLANA_KEYPAIR, else fall back to the default id.json
+  const keyPath = process.env.SOLANA_KEYPAIR
+    ? path.resolve(process.env.SOLANA_KEYPAIR)
+    : path.join(getSolanaConfigDir(), 'id.json');
   const secretKey = JSON.parse(fs.readFileSync(keyPath));
   return Keypair.fromSecretKey(Buffer.from(secretKey));
 }

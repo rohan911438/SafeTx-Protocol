@@ -68,11 +68,12 @@ function deployWithCli(soAbsPath) {
 
     if (!hasSolanaCli()) {
       console.log('❗ Solana CLI not found. Attempting web3.js BpfLoader deploy (non-upgradeable)...');
-      const connection = new Connection('https://api.testnet.solana.com', 'confirmed');
-      // Load payer from default keypair
-      const home = process.env.HOME || process.env.USERPROFILE || '';
-      const keyPath = path.join(home, '.config', 'solana', 'id.json');
-      const secretKey = JSON.parse(fs.readFileSync(keyPath, 'utf-8'));
+  const connection = new Connection('https://api.testnet.solana.com', 'confirmed');
+  // Load payer from SOLANA_KEYPAIR or default id.json
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const defaultKey = path.join(home, '.config', 'solana', 'id.json');
+  const keyPath = process.env.SOLANA_KEYPAIR ? path.resolve(process.env.SOLANA_KEYPAIR) : defaultKey;
+  const secretKey = JSON.parse(fs.readFileSync(keyPath, 'utf-8'));
       const payer = Keypair.fromSecretKey(Buffer.from(secretKey));
 
       const data = fs.readFileSync(soPath);

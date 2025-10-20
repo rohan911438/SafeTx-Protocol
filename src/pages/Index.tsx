@@ -11,7 +11,8 @@ import { NetworkTimeline } from "@/components/NetworkTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SafeTxPanel } from "@/components/SafeTxPanel";
 import mockDataRaw from "@/data/mockMetrics.json";
-import { getStoredPubkey } from "@/lib/wallet";
+import { getStoredPubkey, connectPhantom, hasPhantom } from "@/lib/wallet";
+import { initRegistryWithPhantom, pushMetricWithPhantom, deriveRegistryPDA, getProgramId } from "@/lib/safetx";
 import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData, subscribeMagicblockSSE, mapMagicblockToMetricsData, getMagicblockHealth } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -324,6 +325,24 @@ const Index = () => {
             {isLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating...</span>}
           </div>
           <div className="flex items-center gap-3">
+              {/* Minimal Solana actions */}
+              {hasPhantom() && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const addr = await connectPhantom();
+                      const programId = getProgramId().toString();
+                      const pda = deriveRegistryPDA(new (await import("@solana/web3.js")).PublicKey(addr)).toString();
+                      toast({ title: "Wallet Connected", description: `${addr.slice(0,4)}... connected. Program ${programId}. PDA ${pda.slice(0,6)}...` });
+                    } catch (e:any) {
+                      toast({ title: "Wallet connect failed", description: e.message, variant: "destructive" });
+                    }
+                  }}
+                  className="text-xs px-3 py-1 rounded border border-border hover:bg-accent/10"
+                >
+                  Connect Wallet
+                </button>
+              )}
             <button
               onClick={() => setUseLiveData(!useLiveData)}
               className={`text-xs px-3 py-1 rounded border transition-colors ${
@@ -396,6 +415,36 @@ const Index = () => {
 
         {/* Status Banner */}
         <StatusBanner status={metrics.network_status as "green" | "yellow" | "red"} />
+
+          {/* Quick program controls (devnet) */}
+          <div className="p-3 border border-border/50 rounded-xl bg-card/50 flex flex-wrap gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  const { signature, registryPda } = await initRegistryWithPhantom();
+                  toast({ title: "InitRegistry sent", description: `PDA: ${registryPda.slice(0,8)}..., tx: ${signature.slice(0,8)}...` });
+                } catch (e:any) {
+                  toast({ title: "Init failed", description: e.message, variant: "destructive" });
+                }
+              }}
+              className="text-xs px-3 py-1 rounded border border-primary/40 bg-primary/10 hover:bg-primary/20"
+            >
+              Init Registry (devnet)
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const { signature } = await pushMetricWithPhantom();
+                  toast({ title: "PushMetric sent", description: `tx: ${signature.slice(0,8)}...` });
+                } catch (e:any) {
+                  toast({ title: "Push failed", description: e.message, variant: "destructive" });
+                }
+              }}
+              className="text-xs px-3 py-1 rounded border border-secondary/40 bg-secondary/10 hover:bg-secondary/20"
+            >
+              Push Metric (devnet)
+            </button>
+          </div>
 
         {/* Alert System */}
         <AlertSystem

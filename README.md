@@ -4,6 +4,45 @@ SafeTx is a testnet-focused Solana dashboard that detects network congestion, mo
 
 This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + Recharts) and the **backend API** (Node.js + Express + @solana/web3.js) that fetches real-time metrics from Solana devnet.
 
+## Deployed Addresses (Devnet)
+
+- Program ID: `GHurqnc1CCe9NaBvwvWgBz3qmRP9rePDxNwf5eEgqCD`
+- Admin Wallet (PDA authority): `FUaf11NppCyRCCQtHAEaG8Q11KQnE8SJzbebrWnc6P1M`
+- Cluster: `devnet` (RPC: https://api.devnet.solana.com)
+
+Quick start with Phantom (devnet):
+
+```bat
+:: Connect Phantom in the app, then you can initialize and push directly from the UI
+:: Or run the client from terminal using your local keypair
+
+:: Initialize the registry PDA (admin = your wallet)
+npm run sol:program:init:devnet
+
+:: Push a sample metric into the on-chain ring buffer
+npm run sol:program:push:devnet
+
+:: (Optional) Check your balance on devnet
+npm run sol:balance:me:devnet
+```
+
+Environment overrides (optional):
+
+```env
+VITE_SAFETX_PROGRAM_ID=GHurqnc1CCe9NaBvwvWgBz3qmRP9rePDxNwf5eEgqCD
+VITE_SOLANA_RPC=https://api.devnet.solana.com
+```
+
+See the full on-chain program notes in `contracts/solana/README.md`.
+
+## Visual Overview
+
+For a diagram of the system and data flow, see:
+
+- DIAGRAMS.md → “SafeTx Protocol - Visual Overview”
+
+This shows the user journey, dashboard layout, API request flow, and performance targets.
+
 ## Core Components
 
 - **Backend API** (safetx-backend/) — Node.js server that fetches real Solana testnet metrics via RPC
