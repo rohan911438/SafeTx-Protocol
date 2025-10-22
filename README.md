@@ -15,7 +15,7 @@
 
 *Making Solana transactions reliable at scale - Never lose a transaction to network congestion again*
 
-[Live Demo](http://localhost:8080) | [API Docs](./docs/API.md) | [Video Demo](#) | [Slides](https://claude.ai/public/artifacts/99b98037-17ce-4a66-9591-a49764f64a8f)
+[Live Demo](https://safetx-protocol.lovable.app/) | [API Docs](./docs/API.md) | [Video Demo](#) | [Slides](https://claude.ai/public/artifacts/99b98037-17ce-4a66-9591-a49764f64a8f)
 
 </div>
 
