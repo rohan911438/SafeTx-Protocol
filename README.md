@@ -9,13 +9,15 @@
 <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust"/>
 <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
 
-**🏆 CyberPunk Hackathon Submission 2025**
+**🏆 Cypherpunk Hackathon Submission 2025**
 
 **Team BROTHERHOOD** | **Built by Rohan Kumar**
 
 *Making Solana transactions reliable at scale - Never lose a transaction to network congestion again*
 
 [Live Demo](https://safetx-protocol.lovable.app/) | [API Docs](./docs/API.md) | [Video Demo](#) | [Slides](https://claude.ai/public/artifacts/99b98037-17ce-4a66-9591-a49764f64a8f)
+=======
+[Live Demo](https://safetx-protocol.lovable.app/) | [Documentation](./docs/README.md) | [API Docs](./docs/API.md) | [Video Demo](https://youtu.be/Sfya5mnni9k?si=N9Gp-1x1rLu6KBR5) | [Slides](https://claude.ai/public/artifacts/99b98037-17ce-4a66-9591-a49764f64a8f)
 
 </div>
 
@@ -421,31 +423,7 @@ neon-solana-watch/
 
 ---
 
-## 🎥 Demo & Screenshots
-
-### Dashboard Overview
-![Dashboard](https://via.placeholder.com/800x400/14F195/000000?text=SafeTx+Dashboard)
-
-*Live metrics, real-time charts, and transaction queue management*
-
-### SSE Streaming in Action
-![SSE Stream](https://via.placeholder.com/800x400/3178C6/FFFFFF?text=Real-Time+SSE+Streaming)
-
-*Sub-second latency updates with EventSource API*
-
-### Phantom Wallet Integration
-![Wallet Connect](https://via.placeholder.com/800x400/61DAFB/000000?text=Phantom+Wallet+Connected)
-
-*Seamless browser-based wallet authentication*
-
-### On-Chain Explorer
-![Solana Explorer](https://via.placeholder.com/800x400/000000/FFFFFF?text=On-Chain+Metrics+Storage)
-
-*View stored metrics on Solana Explorer*
-
-**🎬 Video Demo**: [Watch on YouTube](#) *(Coming Soon)*
-
----
+<!-- Demo & Screenshots section removed per request -->
 
 ## 💼 Business Model & Market
 
@@ -476,7 +454,7 @@ neon-solana-watch/
 
 ---
 
-## 🏆 CyberPunk Hackathon Submission
+## 🏆 Cypherpunk Hackathon Submission
 
 ### Team BROTHERHOOD
 
@@ -520,7 +498,7 @@ neon-solana-watch/
 - ✅ 50+ pages of documentation
 - ✅ TypeScript SDK package
 - ✅ OpenAPI specification
-- ✅ Video demonstration (coming soon)
+- ✅ Video demonstration
 - ✅ 6-slide presentation deck
 
 ---
@@ -599,7 +577,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 - **Phantom Team** - For the excellent wallet browser extension
 - **Anchor Framework** - For simplifying Solana program development
 - **shadcn/ui** - For beautiful, accessible React components
-- **CyberPunk Hackathon** - For the opportunity to build and showcase
+- **Cypherpunk Hackathon** - For the opportunity to build and showcase
 
 ---
 
@@ -607,8 +585,8 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ### For This Hackathon Submission
 - **GitHub**: [@rohan911438](https://github.com/rohan911438)
-- **Email**: rohan@example.com
-- **Demo**: http://localhost:8080 (run locally)
+- **Email**: 123131rkorohan@gmail.com
+- **Demo**: https://safetx-protocol.lovable.app/
 - **Repository**: https://github.com/rohan911438/neon-solana-watch
 
 ### For Future Production Use
@@ -645,7 +623,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 If you find SafeTx useful, please consider giving us a ⭐ on GitHub!
 
-**Built with ❤️ by Team BROTHERHOOD for CyberPunk Hackathon 2025**
+**Built with ❤️ by Team BROTHERHOOD for Cypherpunk Hackathon 2025**
 
 [⭐ Star on GitHub](https://github.com/rohan911438/neon-solana-watch) | [🐛 Report Bug](https://github.com/rohan911438/neon-solana-watch/issues) | [💡 Request Feature](https://github.com/rohan911438/neon-solana-watch/issues)
 

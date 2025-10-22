@@ -1,4 +1,4 @@
-# 🏆 CyberPunk Hackathon 2025 - Official Submission
+# 🏆 Cypherpunk Hackathon 2025 - Official Submission
 
 ## 📋 Project Information
 
@@ -7,6 +7,8 @@
 **Team Member:** Rohan Kumar  
 **Submission Date:** October 22, 2025  
 **Category:** Infrastructure / Developer Tools  
+
+**Contact:** 123131rkorohan@gmail.com
 
 ---
 
@@ -37,10 +39,10 @@ SafeTx is a complete infrastructure layer that helps Solana dApps, wallets, and 
 
 | Resource | URL |
 |----------|-----|
-| 🌐 **Live Demo** | http://localhost:8080 (run locally) |
+| 🌐 **Live Demo** | https://safetx-protocol.lovable.app/ |
 | 📂 **GitHub Repository** | https://github.com/rohan911438/neon-solana-watch |
 | 📖 **Documentation** | [docs/README.md](./docs/README.md) |
-| 🎥 **Video Demo** | [YouTube Link](#) *(Coming Soon)* |
+| 🎥 **Video Demo** | https://youtu.be/Sfya5mnni9k?si=N9Gp-1x1rLu6KBR5 |
 | 📊 **Presentation Deck** | [Google Slides](#) *(Coming Soon)* |
 | 🔗 **Solana Explorer** | https://explorer.solana.com/address/GHurqnc1CCe9NaBvwvWgBz3qmRP9rePDxNwf5eEgqCD?cluster=devnet |
 
@@ -366,16 +368,16 @@ Then:
 **Team BROTHERHOOD**  
 **Rohan Kumar**
 
-- 📧 Email: rohan@example.com
+- 📧 Email: 123131rkorohan@gmail.com
 - 🐙 GitHub: [@rohan911438](https://github.com/rohan911438)
 - 🔗 Repository: https://github.com/rohan911438/neon-solana-watch
-- 🌐 Demo: http://localhost:8080
+- 🌐 Demo: https://safetx-protocol.lovable.app/
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **CyberPunk Hackathon** - For the amazing opportunity
+- **Cypherpunk Hackathon** - For the amazing opportunity
 - **Solana Foundation** - For the incredible blockchain platform
 - **Phantom Team** - For the excellent wallet
 - **Anchor Framework** - For simplifying Solana development
@@ -387,10 +389,10 @@ Then:
 
 ## 🏆 Thank You! 🏆
 
-**Built with ❤️ by Team BROTHERHOOD for CyberPunk Hackathon 2025**
+**Built with ❤️ by Team BROTHERHOOD for Cypherpunk Hackathon 2025**
 
 We believe SafeTx can make Solana the most reliable blockchain for billions of users.
 
-[⭐ Star on GitHub](https://github.com/rohan911438/neon-solana-watch) | [🐛 Issues](https://github.com/rohan911438/neon-solana-watch/issues) | [📧 Contact](mailto:rohan@example.com)
+[⭐ Star on GitHub](https://github.com/rohan911438/neon-solana-watch) | [🐛 Issues](https://github.com/rohan911438/neon-solana-watch/issues) | [📧 Contact](mailto:123131rkorohan@gmail.com)
 
 </div>
