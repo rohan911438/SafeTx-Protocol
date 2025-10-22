@@ -4,6 +4,28 @@ SafeTx is a testnet-focused Solana dashboard that detects network congestion, mo
 
 This repo contains both the **frontend dashboard** (React + Tailwind + shadcn + Recharts) and the **backend API** (Node.js + Express + @solana/web3.js) that fetches real-time metrics from Solana devnet.
 
+## 🚀 For Developers & Companies
+
+Want to integrate SafeTx metrics into your app? Check out our guides:
+
+- **[Getting Started Guide](./docs/GETTING_STARTED.md)** - How to get API keys and start integrating
+- **[API Reference](./docs/API.md)** - Complete endpoint documentation
+- **[OpenAPI Spec](./docs/openapi.yaml)** - Machine-readable API specification
+- **[TypeScript SDK](./packages/safetx-client/README.md)** - Official JavaScript/TypeScript client
+
+**Quick Start:**
+```bash
+npm install @safetx/client
+```
+
+```typescript
+import { SafeTxApiClient } from '@safetx/client';
+const client = new SafeTxApiClient({ baseURL: 'http://localhost:5000' });
+const metrics = await client.getMetrics();
+```
+
+---
+
 ## Deployed Addresses (Devnet)
 
 - Program ID: `GHurqnc1CCe9NaBvwvWgBz3qmRP9rePDxNwf5eEgqCD`
@@ -522,9 +544,10 @@ The frontend will start on `http://localhost:5173`
 ### 5️⃣ Access the Dashboard
 
 1. Navigate to `http://localhost:5173`
-2. Click "Connect Phantom Wallet"
+2. Click "Connect Phantom Wallet" (or "Connect Wallet" in top bar)
 3. Approve the connection
-4. You'll be redirected to `/dashboard` with **live Solana devnet metrics**!
+4. You'll be on `/dashboard` with **live Solana devnet metrics**!
+5. Toggle "SSE ON" to switch to real-time streaming (via `/api/events/stream`)
 
 ## API Endpoints
 
@@ -540,6 +563,11 @@ The backend provides these endpoints:
 | `/api/health` | GET | Health check endpoint |
 
 See `safetx-backend/README.md` for detailed API documentation.
+
+For company integrations:
+- Full API guide: `docs/API.md`
+- OpenAPI spec: `docs/openapi.yaml`
+- SDK (TypeScript): `packages/safetx-client` published as `@safetx/client`
 
 ## Environment Variables
 

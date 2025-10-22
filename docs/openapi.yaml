@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: SafeTx Public API
+  version: 0.1.0
+  description: REST and SSE endpoints for SafeTx metrics and queue management.
+servers:
+  - url: http://localhost:5000
+    description: Local
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /api/metrics:
+    get:
+      summary: Get latest metrics snapshot
+      responses:
+        '200':
+          description: Metrics snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metrics'
+        '401': { description: Unauthorized }
+  /api/queue:
+    get:
+      summary: Get queue status
+      responses:
+        '200':
+          description: Queue contents
+    post:
+      summary: Enqueue a transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueTx'
+      responses:
+        '200': { description: Enqueued }
+        '400': { description: Bad Request }
+        '401': { description: Unauthorized }
+  /api/retry:
+    post:
+      summary: Retry all queued transactions
+      responses:
+        '200': { description: Retried }
+        '401': { description: Unauthorized }
+  /api/flush:
+    post:
+      summary: Flush the queue
+      responses:
+        '200': { description: Flushed }
+        '401': { description: Unauthorized }
+  /api/events/stream:
+    get:
+      summary: Metrics stream via SSE
+      parameters:
+        - in: query
+          name: key
+          schema:
+            type: string
+          required: false
+          description: API key (use when headers are not possible)
+      responses:
+        '200': { description: text/event-stream }
+        '401': { description: Unauthorized }
+components:
+  schemas:
+    Metrics:
+      type: object
+      properties:
+        tps: { type: number }
+        slot_time: { type: number }
+        success_rate: { type: number }
+        queue_size: { type: integer }
+        retry_count: { type: integer }
+        latest_slot: { type: integer }
+        current_leader: { type: string }
+        network_status: { type: string, enum: [green, yellow, red] }
+        tps_history:
+          type: array
+          items:
+            type: number
+        recent_transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              tx_id: { type: string }
+              status: { type: string, enum: [queued, processed, failed] }
+              time: { type: string }
+    QueueTx:
+      type: object
+      required: [tx_id, sender]
+      properties:
+        tx_id: { type: string }
+        sender: { type: string }
+        type: { type: string }
+        fee: { type: string }
+security:
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key

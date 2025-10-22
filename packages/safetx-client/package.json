@@ -1,0 +1,32 @@
+{
+  "name": "@safetx/client",
+  "version": "0.1.0",
+  "description": "SafeTx SDK: REST client, SSE stream, and Solana helpers for the SafeTx Protocol",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": ">=1.87.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.4.0",
+    "rimraf": "^5.0.5"
+  }
+}

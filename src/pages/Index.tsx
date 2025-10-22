@@ -13,7 +13,7 @@ import { SafeTxPanel } from "@/components/SafeTxPanel";
 import mockDataRaw from "@/data/mockMetrics.json";
 import { getStoredPubkey, connectPhantom, hasPhantom } from "@/lib/wallet";
 import { initRegistryWithPhantom, pushMetricWithPhantom, deriveRegistryPDA, getProgramId } from "@/lib/safetx";
-import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData, subscribeMagicblockSSE, mapMagicblockToMetricsData, getMagicblockHealth } from "@/lib/api";
+import { fetchMetrics, retryPendingTransactions, flushQueue, type MetricsData, subscribeBackendSSE } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 const mockData = mockDataRaw as MetricsData;
@@ -33,8 +33,7 @@ const Index = () => {
   const [slotTimeHistory, setSlotTimeHistory] = useState([0.41, 0.39, 0.43, 0.38, 0.44, 0.42]);
   const [autoRetry, setAutoRetry] = useState(true);
   const [useSSE, setUseSSE] = useState(false);
-  const [magicblockStatus, setMagicblockStatus] = useState<'connected'|'error'|'disconnected'>('disconnected');
-  const [lastMBRoute, setLastMBRoute] = useState<string | null>(null);
+  const [sseStatus, setSseStatus] = useState<'connected'|'error'|'disconnected'>('disconnected');
 
   const [alerts, setAlerts] = useState([
     {
@@ -50,6 +49,26 @@ const Index = () => {
       timestamp: "15 minutes ago",
     },
   ]);
+
+  // Helper: detect threshold breaches and raise alerts (dedup with a ref)
+  const lastAlertTimeRef = { current: 0 };
+  const maybeRaiseAlerts = (successRate: number, slotTime: number) => {
+    const now = Date.now();
+    const cooldown = 10000; // 10s minimum between threshold toasts
+    if (now - lastAlertTimeRef.current < cooldown) return;
+
+    if (successRate < 95) {
+      lastAlertTimeRef.current = now;
+      const id = `alert-${now}`;
+      setAlerts((prev) => [{ id, type: 'warning' as const, message: `⚠️ Success rate dropped to ${successRate.toFixed(1)}%`, timestamp: 'just now' }, ...prev].slice(0, 10));
+      toast({ title: 'Low Success Rate', description: `Success rate is ${successRate.toFixed(1)}%`, variant: 'destructive' });
+    } else if (slotTime > 0.6) {
+      lastAlertTimeRef.current = now;
+      const id = `alert-${now}`;
+      setAlerts((prev) => [{ id, type: 'warning' as const, message: `⏱️ Slot time is high: ${slotTime.toFixed(2)}s`, timestamp: 'just now' }, ...prev].slice(0, 10));
+      toast({ title: 'Slow Slot Time', description: `Slot time is ${slotTime.toFixed(2)}s`, variant: 'destructive' });
+    }
+  };
 
   const blocks = [
     {
@@ -155,6 +174,9 @@ const Index = () => {
           return newHistory.slice(-6);
         });
         
+        // Threshold-based alerts
+        maybeRaiseAlerts(data.success_rate, data.slot_time);
+
         // Clear error on successful fetch
         if (error) {
           toast({
@@ -186,43 +208,35 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [useLiveData, useSSE, toast, error]);
 
-  // MagicBlock SSE subscription
+  // Backend SSE subscription
   useEffect(() => {
     if (!useSSE) return;
 
-    // initial health check (non-blocking)
-    getMagicblockHealth().then((h) => {
-      if (h?.magicblock?.routesAvailable > 0) {
-        setMagicblockStatus(h.magicblock.status || 'connected');
-      }
-    }).catch(() => {});
-
-    const unsubscribe = subscribeMagicblockSSE((mb) => {
-      setMetrics((prev) => mapMagicblockToMetricsData(mb, prev));
+    const unsubscribe = subscribeBackendSSE((m) => {
+      setMetrics(m);
+      setBlockHeight(m.latest_slot - 1);
       setBackendConnected(true);
-      setMagicblockStatus((mb.magicblockStatus as any) || 'connected');
-      setLastMBRoute(mb.lastMagicBlockRoute ?? null);
+      setSseStatus('connected');
 
-      // update derived histories
       setSuccessRateHistory(prev => {
-        const val = typeof mb.successRate === 'number' ? mb.successRate : prev[prev.length - 1];
-        const arr = [...prev, val];
+        const arr = [...prev, m.success_rate];
         return arr.slice(-6);
       });
       setSlotTimeHistory(prev => {
-        const val = typeof mb.slotTime === 'number' ? mb.slotTime : prev[prev.length - 1];
-        const arr = [...prev, val];
+        const arr = [...prev, m.slot_time];
         return arr.slice(-6);
       });
+
+      maybeRaiseAlerts(m.success_rate, m.slot_time);
     }, (err) => {
       console.error('SSE error:', err);
-      setMagicblockStatus('error');
+      setSseStatus('error');
       setBackendConnected(false);
     });
 
     return () => {
       unsubscribe?.();
-      setMagicblockStatus('disconnected');
+      setSseStatus('disconnected');
       setBackendConnected(false);
     };
   }, [useSSE]);
@@ -314,7 +328,7 @@ const Index = () => {
             {useLiveData && backendConnected && (
               <span className="text-xs px-2 py-0.5 rounded bg-success/20 text-success border border-success/40 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                LIVE
+                {useSSE ? 'LIVE (SSE)' : 'LIVE'}
               </span>
             )}
             {useLiveData && !backendConnected && !isLoading && (
@@ -325,23 +339,42 @@ const Index = () => {
             {isLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating...</span>}
           </div>
           <div className="flex items-center gap-3">
-              {/* Minimal Solana actions */}
+              {/* Frontend-only Phantom Wallet Connection */}
               {hasPhantom() && (
                 <button
                   onClick={async () => {
                     try {
+                      console.log("🔵 Frontend wallet connection initiated (browser extension only)");
                       const addr = await connectPhantom();
                       const programId = getProgramId().toString();
                       const pda = deriveRegistryPDA(new (await import("@solana/web3.js")).PublicKey(addr)).toString();
-                      toast({ title: "Wallet Connected", description: `${addr.slice(0,4)}... connected. Program ${programId}. PDA ${pda.slice(0,6)}...` });
+                      toast({ 
+                        title: "✅ Wallet Connected (Frontend)", 
+                        description: `Connected to ${addr.slice(0,4)}...${addr.slice(-4)} via Phantom browser extension` 
+                      });
                     } catch (e:any) {
-                      toast({ title: "Wallet connect failed", description: e.message, variant: "destructive" });
+                      console.error("❌ Wallet connection failed:", e);
+                      toast({ 
+                        title: "Wallet Connection Failed", 
+                        description: e.message, 
+                        variant: "destructive" 
+                      });
                     }
                   }}
-                  className="text-xs px-3 py-1 rounded border border-border hover:bg-accent/10"
+                  className="text-xs px-4 py-1.5 rounded-md border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary font-semibold transition-all"
                 >
-                  Connect Wallet
+                  🔗 Connect Phantom Wallet
                 </button>
+              )}
+              {!hasPhantom() && (
+                <a
+                  href="https://phantom.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-3 py-1 rounded border border-warning/40 bg-warning/10 hover:bg-warning/20 text-warning"
+                >
+                  Install Phantom
+                </a>
               )}
             <button
               onClick={() => setUseLiveData(!useLiveData)}
@@ -360,7 +393,7 @@ const Index = () => {
                   ? 'border-primary/40 bg-primary/10 hover:bg-primary/20' 
                   : 'border-border hover:bg-accent/10'
               }`}
-              title="Toggle real-time streaming via MagicBlock SSE"
+              title="Toggle real-time streaming via backend SSE"
             >
               {useSSE ? '⚡ SSE ON' : 'SSE OFF'}
             </button>
@@ -401,15 +434,10 @@ const Index = () => {
         {useSSE && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className={`px-2 py-0.5 rounded border ${
-              magicblockStatus === 'connected' ? 'border-success/40 text-success' : magicblockStatus === 'error' ? 'border-destructive/40 text-destructive' : 'border-border'
+              sseStatus === 'connected' ? 'border-success/40 text-success' : sseStatus === 'error' ? 'border-destructive/40 text-destructive' : 'border-border'
             }`}>
-              MagicBlock: {magicblockStatus}
+              Backend SSE: {sseStatus}
             </span>
-            {lastMBRoute && (
-              <span className="px-2 py-0.5 rounded border border-border/50 truncate max-w-[320px]" title={lastMBRoute}>
-                {lastMBRoute}
-              </span>
-            )}
           </div>
         )}
 
@@ -446,7 +474,7 @@ const Index = () => {
             </button>
           </div>
 
-        {/* Alert System */}
+        {/* Alert System (auto-populates on thresholds: success_rate <95%, slot_time >0.6s) */}
         <AlertSystem
           alerts={alerts}
           onDismiss={(id) => setAlerts(alerts.filter((a) => a.id !== id))}

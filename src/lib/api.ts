@@ -1,7 +1,8 @@
 // API service to fetch metrics from SafeTx backend and MagicBlock streaming server
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const MAGICBLOCK_BASE_URL = import.meta.env.VITE_MAGICBLOCK_URL || 'http://localhost:5001';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000';
+const MAGICBLOCK_BASE_URL = (import.meta as any).env?.VITE_MAGICBLOCK_URL || 'http://localhost:5001';
+const API_KEY = (import.meta as any).env?.VITE_API_KEY || undefined;
 
 export interface MetricsData {
   tps: number;
@@ -56,7 +57,9 @@ export function mapMagicblockToMetricsData(mb: MagicblockMetrics, prev: MetricsD
  * Fetch real-time Solana metrics from backend
  */
 export async function fetchMetrics(): Promise<MetricsData> {
-  const response = await fetch(`${API_BASE_URL}/api/metrics`);
+  const response = await fetch(`${API_BASE_URL}/api/metrics`, {
+    headers: API_KEY ? { 'x-api-key': API_KEY } : undefined,
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch metrics: ${response.statusText}`);
   }
@@ -67,11 +70,11 @@ export async function fetchMetrics(): Promise<MetricsData> {
  * Queue a transaction
  */
 export async function queueTransaction(tx: QueueTransaction): Promise<any> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (API_KEY) headers['x-api-key'] = API_KEY;
   const response = await fetch(`${API_BASE_URL}/api/queue`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(tx),
   });
   if (!response.ok) {
@@ -86,6 +89,7 @@ export async function queueTransaction(tx: QueueTransaction): Promise<any> {
 export async function retryPendingTransactions(): Promise<any> {
   const response = await fetch(`${API_BASE_URL}/api/retry`, {
     method: 'POST',
+    headers: API_KEY ? { 'x-api-key': API_KEY } : undefined,
   });
   if (!response.ok) {
     throw new Error(`Failed to retry transactions: ${response.statusText}`);
@@ -99,6 +103,7 @@ export async function retryPendingTransactions(): Promise<any> {
 export async function flushQueue(): Promise<any> {
   const response = await fetch(`${API_BASE_URL}/api/flush`, {
     method: 'POST',
+    headers: API_KEY ? { 'x-api-key': API_KEY } : undefined,
   });
   if (!response.ok) {
     throw new Error(`Failed to flush queue: ${response.statusText}`);
@@ -110,7 +115,9 @@ export async function flushQueue(): Promise<any> {
  * Get current queue status
  */
 export async function getQueueStatus(): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api/queue`);
+  const response = await fetch(`${API_BASE_URL}/api/queue`, {
+    headers: API_KEY ? { 'x-api-key': API_KEY } : undefined,
+  });
   if (!response.ok) {
     throw new Error(`Failed to get queue status: ${response.statusText}`);
   }
@@ -167,4 +174,24 @@ export function subscribeMagicblockSSE(
   return () => {
     try { source.close(); } catch {}
   };
+}
+
+// Backend SSE (unified events stream)
+export function subscribeBackendSSE(
+  onMessage: (data: MetricsData) => void,
+  onError?: (err: any) => void
+) {
+  const url = new URL(`${API_BASE_URL}/api/events/stream`);
+  if (API_KEY) url.searchParams.set('key', API_KEY);
+  const source = new EventSource(url.toString());
+  source.onmessage = (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      onMessage(data);
+    } catch (e) {
+      onError?.(e);
+    }
+  };
+  source.onerror = (err) => onError?.(err);
+  return () => { try { source.close(); } catch {} };
 }
