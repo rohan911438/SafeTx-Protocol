@@ -223,7 +223,8 @@ app.get('/api/events/stream', async (req, res) => {
   res.flushHeaders?.();
 
   let alive = true;
-  req.on('close', () => { alive = false; clearInterval(timer); });
+  let timer; // Declare timer before using it in close handler
+  req.on('close', () => { alive = false; if (timer) clearInterval(timer); });
 
   // Send an initial ping to open the stream on some proxies
   res.write(': connected\n\n');
@@ -240,7 +241,7 @@ app.get('/api/events/stream', async (req, res) => {
 
   await sendOnce();
   const intervalMs = Number(process.env.METRICS_INTERVAL || 2000);
-  const timer = setInterval(() => { if (alive) sendOnce(); }, intervalMs);
+  timer = setInterval(() => { if (alive) sendOnce(); }, intervalMs);
 });
 
 // Queue transaction endpoint
